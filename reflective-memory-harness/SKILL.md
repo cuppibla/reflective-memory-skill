@@ -21,7 +21,7 @@ Persistence is not memory. Storing a transcript is easy; the value is the loop �
 
 Two kinds of memory, two stores, merged at read time:
 
-1. **Learn-the-user (semantic facts).** At the end of each conversation, reflect it into **Vertex AI Memory Bank**, which extracts + consolidates durable per-user facts (*"Dana is an admin at ACME, on the Enterprise plan"*). Retrieve with `PreloadMemoryTool` / `search_memory`.
+1. **Learn-the-user (semantic facts).** At the end of each conversation, reflect it into **Vertex AI Memory Bank**, which extracts + consolidates durable per-user facts (*e.g. "prefers vegetarian food," "on the Enterprise plan"*). Retrieve with `PreloadMemoryTool` / `search_memory`.
 2. **Learn-the-job (episodic lessons).** Log each finished task as a **trajectory** in **Firestore**. An offline **"dream"** — a Cloud Run Job on a schedule — reflects over the *failed* trajectories, distills each into a `{lesson, procedure}`, embeds it, and indexes it in a `memory_chunks` vector collection. Retrieve with `find_nearest`.
 
 A single **`recall()`** tool fans out to both stores and merges them into one context the agent acts on.
@@ -30,7 +30,7 @@ A single **`recall()`** tool fans out to both stores and merges them into one co
 
 ## Does this fit your agent?
 
-The running example is a customer-support agent — its user is "Dana," its tasks are tickets — but the pattern fits **any agent that talks to users and/or completes tasks**; rename `recall`'s return keys and the trajectory fields to your domain. Decide which half you need:
+This skill is domain-neutral. The reference repo *happens* to build a customer-support agent, but the pattern fits **any agent that talks to users and/or completes tasks** — keep your prose generic and rename `recall`'s return keys and the trajectory fields to your domain. Decide which half you need:
 
 - Pure chatbot / Q&A assistant → **learn-the-user only** (Memory Bank). No dream.
 - Agent that completes *tasks* (tickets, workflows, multi-step tool use) → **both halves** — its tasks become trajectories the dream learns from.
@@ -60,4 +60,4 @@ Resources: **`reference-snippets.md`** (verified code for each step), **`gotchas
 
 ## Reference implementation
 
-A complete, runnable example lives at **https://github.com/cuppibla/reflective-memory-demo** (`learn-the-user/` = Memory Bank; `learn-the-job/` = harness + the dream). Point the user there to run the demos, or to diff against what you generate.
+A complete, runnable example lives at **https://github.com/cuppibla/reflective-memory-demo** — one worked instance (a support agent); `learn-the-user/` = Memory Bank, `learn-the-job/` = harness + the dream. Point the user there to run the demos, or to diff against what you generate.

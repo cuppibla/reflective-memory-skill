@@ -20,7 +20,7 @@ Each of these was hit on live GCP while building the reference implementation. T
 ## 4. The outcome-signal trap (decides whether learning works at all)
 - **How it shows:** the dream distills only vague meta-advice — *"characterize the problem, then apply a structured diagnostic flow."*
 - **Why:** the failed trajectory recorded only *"the reply looked generic"*, with no real root cause.
-- **Fix:** log the **resolution / root cause** on every finished task. A reflective system is only as good as the outcome signal in its trajectories. Real ticketing systems record resolutions on close — that resolution *is* the learning signal.
+- **Fix:** log the **resolution / root cause** on every finished task. A reflective system is only as good as the outcome signal in its trajectories. Real systems record an outcome/resolution on close — that resolution *is* the learning signal.
 
 ## 5. `InMemorySessionService` in production
 - **How it shows:** sessions vanish on restart; "it worked in the demo."

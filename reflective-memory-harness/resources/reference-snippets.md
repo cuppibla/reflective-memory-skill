@@ -28,10 +28,10 @@ await memory_service.add_events_to_memory(
 ## 3. Log a finished task as a trajectory (learn-the-job; zero added latency)
 ```python
 log_trajectory(
-    agent_id="support_agent", user_id=user_id,
-    task="can't access analytics dashboard",
+    agent_id=AGENT_ID, user_id=user_id,
+    task=task_description,                # whatever the agent attempted
     events=[...], outcome="failure",
-    failure_reason="led with generic troubleshooting; real cause was an unassigned role")  # Guardrail 4
+    failure_reason="<the REAL root cause — not just 'the output looked wrong'>")  # Guardrail 4
 # → one doc in `trajectories`, processed=False (the dream's work queue)
 ```
 
@@ -52,9 +52,9 @@ for traj in trajectories.where(filter=FieldFilter("processed", "==", False)).str
 ## 5. recall — read BOTH stores, merge into one payload (the agent's tool)
 ```python
 async def recall(query: str, tool_context) -> dict:
-    facts   = await tool_context.search_memory(query)                  # Memory Bank — semantic (who the user is)
-    lessons = search_job_memory(query, agent_id="support_agent", k=3)  # Firestore KNN — episodic (how to handle it)
-    return {"customer_facts": facts, "job_lessons": lessons}           # the merge
+    facts   = await tool_context.search_memory(query)              # Memory Bank — durable facts about the user
+    lessons = search_job_memory(query, agent_id=AGENT_ID, k=3)     # Firestore KNN — lessons from past tasks
+    return {"user_facts": facts, "job_lessons": lessons}          # the merge (rename keys to your domain)
 # search_job_memory uses find_nearest(query_vector=Vector([...]),
 #   distance_measure=DistanceMeasure.DOT_PRODUCT, limit=k), filtered by scope.
 ```
