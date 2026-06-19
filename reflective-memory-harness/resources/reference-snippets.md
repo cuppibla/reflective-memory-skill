@@ -5,7 +5,7 @@ These mirror the runnable reference implementation at **github.com/cuppibla/refl
 ## 1. Sessions + Memory Bank, one Runner (learn-the-user wiring)
 ```python
 session_service = DatabaseSessionService(
-    db_url="postgresql+asyncpg://USER:PASS@127.0.0.1:5432/agentdb")   # async driver — Guardrail 5
+    db_url="postgresql+asyncpg://USER:PASS@127.0.0.1:5432/agentdb")   # async driver; durable sessions, never InMemory in prod
 memory_service  = VertexAiMemoryBankService(
     project=PROJECT, location="us-central1", agent_engine_id=AGENT_ENGINE_ID)
 

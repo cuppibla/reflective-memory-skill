@@ -40,6 +40,8 @@ reflective-memory-harness/
   resources/
     gotchas.md                the verified traps + fixes
     reference-snippets.md     the load-bearing, verified API calls
+    evaluation.md             the three proofs — incl. the honest A/B design
+    project-layout.md         the harness/ vs agents/ tree
 ```
 
 The six guardrails the builder agent can’t ignore:

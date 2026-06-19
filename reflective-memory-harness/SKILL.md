@@ -28,18 +28,26 @@ A single **`recall()`** tool fans out to both stores and merges them into one co
 
 > This is "build your own **Dreams**" — the open, Google-Cloud equivalent of Anthropic's managed Dreams feature: Memory Bank does the user-memory consolidation, and the offline dream surfaces the job lessons.
 
+## Does this fit your agent?
+
+The running example is a customer-support agent — its user is "Dana," its tasks are tickets — but the pattern fits **any agent that talks to users and/or completes tasks**; rename `recall`'s return keys and the trajectory fields to your domain. Decide which half you need:
+
+- Pure chatbot / Q&A assistant → **learn-the-user only** (Memory Bank). No dream.
+- Agent that completes *tasks* (tickets, workflows, multi-step tool use) → **both halves** — its tasks become trajectories the dream learns from.
+- Stateless one-shot tool ("summarize this PDF") → neither; skip the harness entirely.
+
 ## The build plan
 
-When asked to build this, **produce a short plan first (let the user review), then implement.** Steps:
+Work in this order — **plan → user review → implement module by module → verify.** Do not declare the build done until the three proofs in `resources/evaluation.md` pass. Steps:
 
-1. **Layout** — `learn-the-user/` (Memory Bank) and `learn-the-job/` (harness + dream). Keep memory machinery inside a `harness/`; make agents thin config, so a second agent inherits memory for free.
+1. **Layout** — `learn-the-user/` (Memory Bank) and `learn-the-job/` (harness + dream); keep memory machinery inside a `harness/`, agents as thin config, so a second agent inherits memory for free. Full tree in `resources/project-layout.md`.
 2. **Sessions** — `DatabaseSessionService` on Cloud SQL (async `asyncpg`). Never `InMemorySessionService` outside a throwaway test.
 3. **Learn-the-user** — wire `VertexAiMemoryBankService`; reflect at session end **synchronously** (Guardrail 1).
 4. **Learn-the-job** — a `trajectory_log` (records `agent_id`, `user_id`, events, an `outcome`, and the **resolution / root cause**); the `dream` (distill → chunk → embed → index); the `recall` tool (merge both stores).
 5. **Ship the dream** — package it as a Cloud Run Job with a Dockerfile, fired nightly by Cloud Scheduler (Guardrail 3).
-6. **Verify before declaring done** — reproduce the controlled A/B (job memory off → fail, on → succeed, all else held constant) and cross-agent inheritance.
+6. **Verify before declaring done** — run the three proofs in `resources/evaluation.md`: cross-session user memory, the **honest A/B** (the lesson is the *only* variable, scored by an LLM judge), and cross-agent inheritance. A stored lesson proves nothing until it changes the next decision.
 
-Use **`resources/reference-snippets.md`** for the exact, verified code for each step. Treat **`resources/gotchas.md`** as hard constraints.
+Resources: **`reference-snippets.md`** (verified code for each step), **`gotchas.md`** (hard constraints), **`evaluation.md`** (the three proofs), **`project-layout.md`** (the tree).
 
 ## Guardrails (non-negotiable — each one cost a real debugging session to learn)
 
