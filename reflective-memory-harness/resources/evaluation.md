@@ -13,7 +13,7 @@ The build is the easy part. The proof is the point: a stored "lesson" means noth
 This is the proof people fake. Get it right or the demo proves nothing. Four design rules keep it honest:
 
 1. **The agent's base instruction must contain ZERO domain knowledge about the fix.** Whatever the lesson teaches must be able to reach the agent *only* as a dream-distilled memory — never baked into the base prompt. If it's in the instruction, the A/B is meaningless.
-2. **Change exactly one variable: whether the job lesson is retrievable.** Hold the model, instructions, user facts, and task shape identical between the OFF and ON runs.
+2. **Change exactly one variable: whether the agent CONSULTS job memory.** Hold model, instructions, user facts, and task identical. **Make OFF a real toggle — the recall tool simply doesn't query the job store.** Do NOT rely on "run before the store is populated": on any real or shared store the lesson (or near-duplicates) may already exist, so OFF silently retrieves them and the A/B won't flip. The lesson can be present for BOTH runs; only *consulting* it differs. *(Verified live: the empty-store assumption gave a false OFF=pass; the toggle gave the true fail→pass flip.)*
 3. **Use a symptom-only task** for the test — phrased so it does not hand the agent the diagnosis.
 4. **Score the ACTION with an LLM judge, majority-of-3** — not a human eyeball, not keyword matching. The judge rates the recommended action, not name-dropped context.
 

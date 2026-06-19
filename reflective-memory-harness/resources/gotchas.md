@@ -5,7 +5,7 @@ Each of these was hit on live GCP while building the reference implementation. T
 ## 1. Fire-and-forget amnesia (the #1 trap)
 - **How it shows:** the agent stores nothing; in a short-lived script you may see `Background ingest_events task failed: Cannot send a request, as the client has been closed.`
 - **Why:** the obvious `add_session_to_memory()` returns *before* the write lands. The client closes first.
-- **Fix:** `await memory_service.add_events_to_memory(app_name=APP, user_id=uid, events=session.events, custom_metadata={"wait_for_completion": True})` — blocks until extract + consolidate finish.
+- **Fix:** `await memory_service.add_events_to_memory(app_name=APP, user_id=uid, events=session.events, custom_metadata={"wait_for_completion": True})` — blocks until extract + consolidate finish (verified working live on Vertex AI Memory Bank).
 
 ## 2. The 3072-dim vector-index wall
 - **How it shows:** the Firestore composite vector index fails to build / similarity search errors out.
@@ -29,3 +29,8 @@ Each of these was hit on live GCP while building the reference implementation. T
 ## 6. Scope leakage and poisoned lessons (governance)
 - **How it shows:** one agent (or tenant) reads another's private memories; or a wrong lesson keeps resurfacing with no way to remove it.
 - **Fix:** every chunk carries a `scope` (`private` | `agent_shared` | `harness_shared`) enforced **at retrieval**, and a `source_trajectory` so a poisoned/wrong lesson can be traced and revoked. A reflective system preserves a bad conclusion as faithfully as a good one — make it revocable.
+
+## 7. The genai client "client has been closed" (a sibling of #1)
+- **How it shows:** `RuntimeError: Cannot send a request, as the client has been closed` from deep inside a `generate_content` / `embed_content` call — often only under retries or repeated calls (e.g. an LLM judge run N times). *(Hit live in this exact build.)*
+- **Why:** a throwaway client used inline — `genai.Client(...).models.generate_content(...)` — has no surviving reference, so it gets garbage-collected (its httpx client closed) mid-request.
+- **Fix:** create ONE long-lived client and reuse it — `@lru_cache(maxsize=1)` on a `_client()` factory is enough. Never construct a `genai.Client()` inline per call. (Same root family as #1: a client closing before the work finishes.)

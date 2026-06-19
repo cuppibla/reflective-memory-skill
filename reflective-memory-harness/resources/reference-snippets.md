@@ -9,6 +9,9 @@ session_service = DatabaseSessionService(
 memory_service  = VertexAiMemoryBankService(
     project=PROJECT, location="us-central1", agent_engine_id=AGENT_ENGINE_ID)
 
+# Import PreloadMemoryTool from the SUBMODULE — `from google.adk.tools import
+# PreloadMemoryTool` raises ImportError on ADK 2.x (lazy __init__). Verified fix:
+#   from google.adk.tools.preload_memory_tool import PreloadMemoryTool
 assistant = Agent(
     model="gemini-2.5-flash", name="assistant",
     instruction="Use what you remember; never re-ask what you already know.",
@@ -55,8 +58,12 @@ async def recall(query: str, tool_context) -> dict:
     facts   = await tool_context.search_memory(query)              # Memory Bank — durable facts about the user
     lessons = search_job_memory(query, agent_id=AGENT_ID, k=3)     # Firestore KNN — lessons from past tasks
     return {"user_facts": facts, "job_lessons": lessons}          # the merge (rename keys to your domain)
-# search_job_memory uses find_nearest(query_vector=Vector([...]),
-#   distance_measure=DistanceMeasure.DOT_PRODUCT, limit=k), filtered by scope.
+# search_job_memory does KNN — vector_field is REQUIRED and you must iterate .stream():
+#   col.find_nearest("embedding", query_vector=Vector([...]), limit=k*4,
+#                    distance_measure=DistanceMeasure.DOT_PRODUCT).stream()
+# Scope is NOT a single server-side filter (it's an OR across scope AND agent_id):
+# over-fetch (k*N) then post-filter in Python — harness_shared for anyone;
+# private/agent_shared only for the owning agent_id.
 ```
 
 ## 6. Ship the dream — Cloud Run Job + nightly Scheduler (Guardrail 3)
