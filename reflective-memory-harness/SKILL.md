@@ -22,7 +22,7 @@ Persistence is not memory. Storing a transcript is easy; the value is the loop �
 Two kinds of memory, two stores, merged at read time:
 
 1. **Learn-the-user (semantic facts).** At the end of each conversation, reflect it into **Vertex AI Memory Bank**, which extracts + consolidates durable per-user facts (*e.g. "prefers vegetarian food," "on the Enterprise plan"*). Retrieve with `PreloadMemoryTool` / `search_memory`.
-2. **Learn-the-job (episodic lessons).** Log each finished task as a **trajectory** in **Firestore**. An offline **"dream"** — a Cloud Run Job on a schedule — reflects over the *failed* trajectories, distills each into a `{lesson, procedure}`, embeds it, and indexes it in a `memory_chunks` vector collection. Retrieve with `find_nearest`.
+2. **Learn-the-job (episodic lessons).** Log each finished task as a **trajectory** in **Firestore**. An offline **"dream"** — a Cloud Run Job on a schedule — reflects over the *failed* (or inefficient) trajectories, distills each into a `{lesson, procedure}`, embeds it, and indexes it in a `memory_chunks` vector collection. Retrieve with `find_nearest`. For a **multi-tool / multi-step** agent the `procedure` can encode a *better path* (which tool to call first) — so with a capable base model the win is often a **shorter trajectory to the same answer**, not a wrong→right fix.
 
 A single **`recall()`** tool fans out to both stores and merges them into one context the agent acts on.
 

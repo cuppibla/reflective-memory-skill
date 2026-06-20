@@ -30,6 +30,10 @@ The lesson is the only variable, and the outcome flips. That is the evidence cha
 
 > experience → recorded outcome → distilled lesson → scoped retrieval → changed action → judged result
 
+## When the win is the PATH, not the answer
+
+A capable base model often already reaches the *right* answer without the lesson — it just takes a worse route (checks the wrong things first, wanders, more tool calls). A pure correctness A/B then won't flip (OFF and ON both pass), but the agent is still improving: it learned a **shorter trajectory**. So for a **multi-tool / multi-step** agent, **measure trajectory efficiency too** — tool-call count / path length, not only final-answer correctness. Hold everything constant, toggle job memory, and report **avg steps OFF vs ON** next to the correctness numbers. *(Verified live: a support agent's correctness held at 0 wrong either way, while avg tool-call steps dropped 3.0 → 1.8 once it retrieved the procedure — same answers, fewer dead-ends.)*
+
 ## Proof 3 — a second agent inherits (it's harness, not agent code)
 
 - Add a **different** agent that has never seen the failed task and has no private history with it.
