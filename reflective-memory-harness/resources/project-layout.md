@@ -4,7 +4,7 @@ Memory machinery lives in a `harness/`; agents are thin config. That boundary is
 
 ```
 learn-the-user/                 # Memory Bank (managed) — durable per-user facts
-  create_engine.py                provision the Memory Bank backend → AGENT_ENGINE_ID
+  create_engine.py                reuse the Memory Bank backend if AGENT_ENGINE_ID is set; provision (behind a flag) only when unset
   run_demo.py                     session 1 states facts → reflect → session 2 recalls (Proof 1)
 
 learn-the-job/                  # Firestore + the dream — lessons from the agent's own work

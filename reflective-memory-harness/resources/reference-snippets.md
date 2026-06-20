@@ -8,6 +8,9 @@ session_service = DatabaseSessionService(
     db_url="postgresql+asyncpg://USER:PASS@127.0.0.1:5432/agentdb")   # async driver; durable sessions, never InMemory in prod
 memory_service  = VertexAiMemoryBankService(
     project=PROJECT, location="us-central1", agent_engine_id=AGENT_ENGINE_ID)
+# AGENT_ENGINE_ID points at an EXISTING Memory Bank backend — provision it ONCE, then reuse.
+# Don't create a new Agent Engine per run (they're heavyweight). Provision only when unset:
+#   ae = agent_engines.get(AGENT_ENGINE_ID) if AGENT_ENGINE_ID else agent_engines.create(...)
 
 # Import PreloadMemoryTool from the SUBMODULE — `from google.adk.tools import
 # PreloadMemoryTool` raises ImportError on ADK 2.x (lazy __init__). Verified fix:
@@ -54,10 +57,15 @@ for traj in trajectories.where(filter=FieldFilter("processed", "==", False)).str
 
 ## 5. recall — read BOTH stores, merge into one payload (the agent's tool)
 ```python
-async def recall(query: str, tool_context) -> dict:
-    facts   = await tool_context.search_memory(query)              # Memory Bank — durable facts about the user
-    lessons = search_job_memory(query, agent_id=AGENT_ID, k=3)     # Firestore KNN — lessons from past tasks
-    return {"user_facts": facts, "job_lessons": lessons}          # the merge (rename keys to your domain)
+# Bind agent_id per agent via a FACTORY, so a new agent inherits recall with zero memory
+# code (the thin-config rule). Do NOT use a module-level AGENT_ID constant.
+def make_recall_tool(*, agent_id: str, k: int = 3):
+    async def recall(query: str, tool_context) -> dict:
+        facts   = await tool_context.search_memory(query)          # Memory Bank — durable facts about the user
+        lessons = search_job_memory(query, agent_id=agent_id, k=k) # Firestore KNN — lessons from past tasks
+        return {"user_facts": facts, "job_lessons": lessons}       # the merge (rename keys to your domain)
+    return recall
+# each agent lists make_recall_tool(agent_id=spec.agent_id) in its tools — inheritance for free.
 # search_job_memory does KNN — vector_field is REQUIRED and you must iterate .stream():
 #   col.find_nearest("embedding", query_vector=Vector([...]), limit=k*4,
 #                    distance_measure=DistanceMeasure.DOT_PRODUCT).stream()
